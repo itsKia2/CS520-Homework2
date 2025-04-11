@@ -13,11 +13,45 @@ public class ExpenseTrackerController {
     private ExpenseTrackerView view;
 
     public ExpenseTrackerController(ExpenseTrackerModel model, ExpenseTrackerView view) {
-        this.model = model;
-        this.view = view;
-
-        // Set up view event handlers
-    }
+      this.model = model;
+      this.view = view;
+  
+      // Set up the filter button event handler
+      view.setFilterListener(e -> {
+          String category = view.getCategoryFilter();
+          String amountStr = view.getAmountFilter();
+  
+          TransactionFilter filter = null;
+  
+          if (!category.isEmpty()) {
+              filter = new filter.CategoryFilter(category);
+          }
+  
+          if (!amountStr.isEmpty()) {
+              try {
+                  double amount = Double.parseDouble(amountStr);
+                  TransactionFilter amountFilter = new filter.AmountFilter(amount);
+  
+                  if (filter != null) {
+                      // Combine both filters: apply category first, then amount
+                      TransactionFilter finalFilter = filter;
+                      filter = transactions -> amountFilter.apply(finalFilter.apply(transactions));
+                  } else {
+                      filter = amountFilter;
+                  }
+              } catch (NumberFormatException ex) {
+                  System.out.println("Invalid amount format.");
+              }
+          }
+  
+          if (filter != null) {
+              List<Transaction> filtered = filter.apply(model.getTransactions());
+              view.refreshTable(filtered);
+          } else {
+              refresh(); // No filters, show all transactions
+          }
+      });
+  }
 
     public void refresh() {
         // Get transactions from model

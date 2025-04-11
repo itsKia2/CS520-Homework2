@@ -1,128 +1,102 @@
 package view;
 
 import javax.swing.*;
-import javax.swing.JFormattedTextField.AbstractFormatterFactory;
 import javax.swing.table.DefaultTableModel;
-
-import controller.InputValidation;
-
 import java.awt.*;
-import java.text.NumberFormat;
-
-import model.Transaction;
+import java.awt.event.ActionListener;
 import java.util.List;
+import model.Transaction;
 
 public class ExpenseTrackerView extends JFrame {
 
-  private JTable transactionsTable;
-  private JButton addTransactionBtn;
-  private JFormattedTextField amountField;
-  private JTextField categoryField;
-  private DefaultTableModel model;
-  
+    private DefaultTableModel tableModel;
+    private JTable transactionTable;
 
-  public ExpenseTrackerView() {
-    setTitle("Expense Tracker"); // Set title
-    setSize(600, 400); // Make GUI larger
+    // Fields for filtering
+    private JTextField categoryFilterField;
+    private JTextField amountFilterField;
+    private JButton filterButton;
 
-    String[] columnNames = {"serial", "Amount", "Category", "Date"};
-    this.model = new DefaultTableModel(columnNames, 0);
+    // Fields for adding transactions
+    private JTextField amountInputField;
+    private JTextField categoryInputField;
+    private JButton addTransactionBtn;
 
-    addTransactionBtn = new JButton("Add Transaction");
+    public ExpenseTrackerView() {
+        setTitle("Expense Tracker");
+        setSize(600, 500);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
 
-    // Create UI components
-    JLabel amountLabel = new JLabel("Amount:");
-    NumberFormat format = NumberFormat.getNumberInstance();
+        // Table
+        tableModel = new DefaultTableModel(new Object[]{"Amount", "Category", "Timestamp"}, 0);
+        transactionTable = new JTable(tableModel);
+        add(new JScrollPane(transactionTable), BorderLayout.CENTER);
 
-    amountField = new JFormattedTextField(format);
-    amountField.setColumns(10);
+        // Input panel for adding transactions
+        JPanel inputPanel = new JPanel(new FlowLayout());
+        amountInputField = new JTextField(8);
+        categoryInputField = new JTextField(8);
+        addTransactionBtn = new JButton("Add Transaction");
 
-    
-    JLabel categoryLabel = new JLabel("Category:");
-    categoryField = new JTextField(10);
+        inputPanel.add(new JLabel("Amount:"));
+        inputPanel.add(amountInputField);
+        inputPanel.add(new JLabel("Category:"));
+        inputPanel.add(categoryInputField);
+        inputPanel.add(addTransactionBtn);
+        add(inputPanel, BorderLayout.NORTH);
 
-    // Create table
-    transactionsTable = new JTable(model);
-  
-    // Layout components
-    JPanel inputPanel = new JPanel();
-    inputPanel.add(amountLabel);
-    inputPanel.add(amountField);
-    inputPanel.add(categoryLabel); 
-    inputPanel.add(categoryField);
-    inputPanel.add(addTransactionBtn);
-  
-    JPanel buttonPanel = new JPanel();
-    buttonPanel.add(addTransactionBtn);
-  
-    // Add panels to frame
-    add(inputPanel, BorderLayout.NORTH);
-    add(new JScrollPane(transactionsTable), BorderLayout.CENTER); 
-    add(buttonPanel, BorderLayout.SOUTH);
-  
-    // Set frame properties
-    setSize(400, 300);
-    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    setVisible(true);
-  
-  }
+        // Filter panel
+        JPanel filterPanel = new JPanel(new FlowLayout());
+        categoryFilterField = new JTextField(10);
+        amountFilterField = new JTextField(10);
+        filterButton = new JButton("Apply Filters");
 
-  public void refreshTable(List<Transaction> transactions) {
-      // Clear existing rows
-      model.setRowCount(0);
-      // Get row count
-      int rowNum = model.getRowCount();
-      double totalCost=0;
-      // Calculate total cost
-      for(Transaction t : transactions) {
-        totalCost+=t.getAmount();
-      }
-      // Add rows from transactions list
-      for(Transaction t : transactions) {
-        model.addRow(new Object[]{rowNum+=1,t.getAmount(), t.getCategory(), t.getTimestamp()}); 
-      }
-        // Add total row
-        Object[] totalRow = {"Total", null, null, totalCost};
-        model.addRow(totalRow);
-  
-      // Fire table update
-      transactionsTable.updateUI();
-  
-    }  
-  
-
-  
-  
-  public JButton getAddTransactionBtn() {
-    return addTransactionBtn;
-  }
-  public DefaultTableModel getTableModel() {
-    return model;
-  }
-  // Other view methods
-    public JTable getTransactionsTable() {
-    return transactionsTable;
-  }
-
-  public double getAmountField() {
-    if(amountField.getText().isEmpty()) {
-      return 0;
-    }else {
-    double amount = Double.parseDouble(amountField.getText());
-    return amount;
+        filterPanel.add(new JLabel("Filter Category:"));
+        filterPanel.add(categoryFilterField);
+        filterPanel.add(new JLabel("Max Amount:"));
+        filterPanel.add(amountFilterField);
+        filterPanel.add(filterButton);
+        add(filterPanel, BorderLayout.SOUTH);
     }
-  }
 
-  public void setAmountField(JFormattedTextField amountField) {
-    this.amountField = amountField;
-  }
+    public void refreshTable(List<Transaction> transactions) {
+        tableModel.setRowCount(0);
+        for (Transaction t : transactions) {
+            tableModel.addRow(new Object[]{t.getAmount(), t.getCategory(), t.getTimestamp()});
+        }
+    }
 
-  
-  public String getCategoryField() {
-    return categoryField.getText();
-  }
+    public DefaultTableModel getTableModel() {
+        return tableModel;
+    }
 
-  public void setCategoryField(JTextField categoryField) {
-    this.categoryField = categoryField;
-  }
+    public String getCategoryFilter() {
+        return categoryFilterField.getText();
+    }
+
+    public String getAmountFilter() {
+        return amountFilterField.getText();
+    }
+
+    public void setFilterListener(ActionListener listener) {
+        filterButton.addActionListener(listener);
+    }
+
+    // === 🆕 Add transaction methods ===
+    public JButton getAddTransactionBtn() {
+        return addTransactionBtn;
+    }
+
+    public double getAmountField() {
+        try {
+            return Double.parseDouble(amountInputField.getText());
+        } catch (NumberFormatException e) {
+            return -1; // Invalid number
+        }
+    }
+
+    public String getCategoryField() {
+        return categoryInputField.getText();
+    }
 }
