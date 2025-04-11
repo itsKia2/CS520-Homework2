@@ -83,7 +83,6 @@ public class ExpenseTrackerView extends JFrame {
         filterButton.addActionListener(listener);
     }
 
-    // === 🆕 Add transaction methods ===
     public JButton getAddTransactionBtn() {
         return addTransactionBtn;
     }
